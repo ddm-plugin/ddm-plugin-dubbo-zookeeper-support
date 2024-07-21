@@ -10,10 +10,50 @@ let yamlUtils = null;
 
 class ZookeeperDataSource {
 
+
   constructor(app) {
     appCore = app;
     urlUtils = appCore.urlUtils;
     yamlUtils = appCore.yamlUtils;
+    this.name = "Zookeeper";
+    // 可用的执行器列表，如果不填则为全部
+    this.invokerTypeList = ['java', 'telnet']
+  }
+
+  
+  async getFormConfig() {
+    
+    return  {
+      properties: [{
+          label: appCore.t('connect.address'),			// 显示名称，如果不存在，取name
+          name: "address",		 // 配置key名称
+          type: "input",			 // 交互类型：input、password、select、switch
+          required: true, 
+          placeholder: appCore.t('connect.address'),
+          default: '127.0.0.1:2181',
+      },
+      {
+        label: 'ACL',			// 显示名称，如果不存在，取name
+        name: "auth",		 // 配置key名称
+        type: "selectAndInput",			 // 交互类型：input、password、select、switch、selectAndInput
+        required: true, 
+        placeholder: appCore.t('connect.zookeeper.aclTips'),
+        default: '',
+        selectName: "scheme",
+        defaultSelect:'auth',
+        choices: [
+          { name: 'digest', value: 'digest'},
+          { name: 'auth', value: 'auth'}
+        ],
+      },
+      {
+          label: appCore.t('connect.sessionTimeout'),			// 显示名称，如果不存在，取name
+          name: "sessionTimeout",		 // 配置key名称
+          type: "input",			 // 交互类型：input、password、select、switch
+          required: true, 
+          default: "5000",
+      }],
+    }
   }
 
   async getServiceList(registryConfig) {
