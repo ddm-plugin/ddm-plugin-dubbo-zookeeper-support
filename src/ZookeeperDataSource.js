@@ -7,6 +7,7 @@ const PRIVDER_PREFIX = "/dubbo";
 let appCore = null;
 let urlUtils = null;
 let yamlUtils = null;
+let dubboConfigrationUtils = null;
 
 class ZookeeperDataSource {
 
@@ -15,6 +16,7 @@ class ZookeeperDataSource {
     appCore = app;
     urlUtils = appCore.urlUtils;
     yamlUtils = appCore.yamlUtils;
+    dubboConfigrationUtils = appCore.dubboConfigrationUtils;
     this.name = "Zookeeper";
     // 可用的执行器列表，如果不填则为全部
     this.invokerTypeList = ['java', 'telnet']
@@ -124,6 +126,32 @@ class ZookeeperDataSource {
     return data ? JSON.parse(data) : null;
   }
 
+  async disableProvider(registryConfig, providerInfo) {
+    try {
+        let doc = this.getCurrentConfiguration(registryConfig, providerInfo);
+
+        doc = await dubboConfigrationUtils.addOrUpdateConfigration(doc, providerInfo.address);
+
+        await this.getRealRegistry(registryConfig).saveConfiguration(registryConfig, providerInfo, doc);
+    } catch (error) {
+        throw new Error(i18n.t("connect.disableProviderError", {e: error}));
+    }
+}
+
+async enableProvider(registryCenterId, providerInfo) {
+    try {
+        let registryConfig = await this.getDataSourceInfo(registryCenterId);
+
+        let doc = await this.getRealRegistry(registryConfig).getCurrentConfiguration(registryConfig, providerInfo);
+
+        doc = await dubboConfigrationUtils.deleteConfigration(doc, providerInfo.address);
+
+        await this.getRealRegistry(registryConfig).saveConfiguration(registryConfig, providerInfo, doc);
+    } catch (error) {
+        throw new Error(i18n.t("connect.enableProviderError", {e: error}));
+    }
+}
+
 
   async getCurrentConfiguration(registryConfig, providerInfo) {
 
@@ -138,13 +166,10 @@ class ZookeeperDataSource {
   async getConfiguration(registryConfig, providerInfo) {
     let zk = await zkClientUtils.createConncetion(registryConfig);
 
-    let {
-      serviceName,
-      version
-    } = providerInfo;
+    let { serviceName, version } = providerInfo;
     let path = this.getPath(serviceName, version);
 
-    return new Promise((resolve, reject) => {
+    const config = await new Promise((resolve, reject) => {
       // eslint-disable-next-line no-unused-vars
       zk.getData(path, async function(error, data, stat) {
 
@@ -162,15 +187,17 @@ class ZookeeperDataSource {
       });
     });
 
+    // 不存在，生成默认的yam
+    return config || yamlUtils.JSONToYaml(yamlUtils.createDubboDefaultConfiguration(this.provider.serviceName));
+
   }
 
 
   async saveConfiguration(registryConfig, providerInfo, doc) {
+
+    const doc = yamlUtils.yamlToJSON(ymal);
     let zkClient = await zkClientUtils.createConncetion(registryConfig);
-    let {
-      serviceName,
-      version
-    } = providerInfo;
+    let { serviceName, version } = providerInfo;
     let path = this.getPath(serviceName, version);
 
 
@@ -287,6 +314,9 @@ class ZookeeperDataSource {
   async invokeMethod(registryConfig, provder, methodInfo, code, invokerType) {
     return await appCore.getInvoke('adapter').invokeMethod(provder, methodInfo, code, invokerType);
   }
+
+
+  
 
 }
 
