@@ -27,17 +27,17 @@ class ZookeeperDataSource {
     
     return  {
       properties: [{
-          label: appCore.t('connect.address'),			// 显示名称，如果不存在，取name
-          name: "address",		 // 配置key名称
-          type: "input",			 // 交互类型：input、password、select、switch
+          label: appCore.t('connect.address'),		
+          name: "address",		 
+          type: "input",			 
           required: true, 
           placeholder: appCore.t('connect.address'),
           default: '127.0.0.1:2181',
       },
       {
-        label: 'ACL',			// 显示名称，如果不存在，取name
-        name: "auth",		 // 配置key名称
-        type: "selectAndInput",			 // 交互类型：input、password、select、switch、selectAndInput
+        label: 'ACL',		
+        name: "auth",		 
+        type: "selectAndInput",			
         required: true, 
         placeholder: appCore.t('connect.zookeeper.aclTips'),
         default: '',
@@ -49,9 +49,9 @@ class ZookeeperDataSource {
         ],
       },
       {
-          label: appCore.t('connect.sessionTimeout'),			// 显示名称，如果不存在，取name
-          name: "sessionTimeout",		 // 配置key名称
-          type: "input",			 // 交互类型：input、password、select、switch
+          label: appCore.t('connect.sessionTimeout'),			
+          name: "sessionTimeout",		 
+          type: "input",			 
           required: true, 
           default: "5000",
       }],
@@ -66,7 +66,7 @@ class ZookeeperDataSource {
   }
 
 
-  async getProviderList(serviceName, registryConfig) {
+  async getProviderList(registryConfig, serviceName) {
     const path = `${PRIVDER_PREFIX}/${serviceName}/providers`;
 
     const children = await zkClientUtils.getChildren(registryConfig, path);
@@ -80,7 +80,7 @@ class ZookeeperDataSource {
         providerInfo.disabledType = "service";
       }
 
-      const metadata = await this.getMetaData(providerInfo, registryConfig);
+      const metadata = await this.getMetaData(registryConfig, providerInfo);
       const methodList = [];
       if(metadata){
         providerInfo.metadata = metadata;
@@ -109,7 +109,7 @@ class ZookeeperDataSource {
   }
 
 
-  async getConsumerList(serviceName, registryConfig) {
+  async getConsumerList(registryConfig, serviceName) {
     const path = `${PRIVDER_PREFIX}/${serviceName}/consumers`;
 
     const children = await zkClientUtils.getChildren(registryConfig, path);
@@ -118,7 +118,7 @@ class ZookeeperDataSource {
 
 
   // 获取元数据信息
-  async getMetaData(providerInfo, registryConfig) {
+  async getMetaData(registryConfig, providerInfo) {
     const { application, serviceName, version } = providerInfo;
     const path = `/dubbo/metadata/${serviceName}/${version}/provider/${application}`;
     
@@ -127,30 +127,20 @@ class ZookeeperDataSource {
   }
 
   async disableProvider(registryConfig, providerInfo) {
-    try {
-        let doc = this.getCurrentConfiguration(registryConfig, providerInfo);
+    let doc = await this.getCurrentConfiguration(registryConfig, providerInfo);
 
-        doc = await dubboConfigrationUtils.addOrUpdateConfigration(doc, providerInfo.address);
+    doc = await dubboConfigrationUtils.addOrUpdateConfigration(doc, providerInfo.address);
 
-        await this.getRealRegistry(registryConfig).saveConfiguration(registryConfig, providerInfo, doc);
-    } catch (error) {
-        throw new Error(i18n.t("connect.disableProviderError", {e: error}));
-    }
-}
+    await this.saveConfiguration(registryConfig, providerInfo, yamlUtils.JSONToYaml(doc));
+  }
 
-async enableProvider(registryCenterId, providerInfo) {
-    try {
-        let registryConfig = await this.getDataSourceInfo(registryCenterId);
+  async enableProvider(registryConfig, providerInfo) {
+    let doc = await this.getCurrentConfiguration(registryConfig, providerInfo);
 
-        let doc = await this.getRealRegistry(registryConfig).getCurrentConfiguration(registryConfig, providerInfo);
+    doc = await dubboConfigrationUtils.deleteConfigration(doc, providerInfo.address);
 
-        doc = await dubboConfigrationUtils.deleteConfigration(doc, providerInfo.address);
-
-        await this.getRealRegistry(registryConfig).saveConfiguration(registryConfig, providerInfo, doc);
-    } catch (error) {
-        throw new Error(i18n.t("connect.enableProviderError", {e: error}));
-    }
-}
+    await this.saveConfiguration(registryConfig, providerInfo, yamlUtils.JSONToYaml(doc));
+  }
 
 
   async getCurrentConfiguration(registryConfig, providerInfo) {
@@ -188,13 +178,12 @@ async enableProvider(registryCenterId, providerInfo) {
     });
 
     // 不存在，生成默认的yam
-    return config || yamlUtils.JSONToYaml(yamlUtils.createDubboDefaultConfiguration(this.provider.serviceName));
+    return config || yamlUtils.JSONToYaml(yamlUtils.createDubboDefaultConfiguration(providerInfo.serviceName));
 
   }
 
 
-  async saveConfiguration(registryConfig, providerInfo, doc) {
-
+  async saveConfiguration(registryConfig, providerInfo, ymal) {
     const doc = yamlUtils.yamlToJSON(ymal);
     let zkClient = await zkClientUtils.createConncetion(registryConfig);
     let { serviceName, version } = providerInfo;
@@ -262,7 +251,6 @@ async enableProvider(registryCenterId, providerInfo) {
   getPath(serviceName, version) {
     return `/dubbo/config/dubbo/${serviceName}:${version ? version : ""}:.configurators`;
   }
-
 
 
   parseProvderInfo(data) {
