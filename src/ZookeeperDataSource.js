@@ -1,5 +1,6 @@
 import zookeeperClient  from "node-zookeeper-client";
 import zkClientUtils    from "./ZookeeperClientUtils";
+import treeUtils        from "./treeUtils";
 
 
 const PRIVDER_PREFIX = "/dubbo";
@@ -60,14 +61,26 @@ class ZookeeperDataSource {
 
   async getServiceList(registryConfig) {
     const children = await zkClientUtils.getChildren(registryConfig, PRIVDER_PREFIX);
-    return children.map(e => { 
-      return { name: e, serviceName: e, type: 'dubbo' }
-    });
+
+    const exculdeName = ["mapping", "config", "metadata"]
+
+    const serviceList= children.filter(e => !exculdeName.find(name => name == e)).map(e => { 
+      return { serviceName: e, uniqueServiceName: e, type: 'dubbo' }
+    })
+
+    return treeUtils.createTree(serviceList, ".");
+  }
+
+  optimizationTree() {
+    let keyword =  this.searchKeyword ?this.searchKeyword.toLowerCase() : "";
+    let filtedInterface = this.allServiceList.filter((i) => this.match(i, keyword));
+    this.$emit("interfaceCountChange", filtedInterface.length);
+    return treeUtils.createTree(filtedInterface, ".");
   }
 
 
-  async getProviderList(registryConfig, serviceName) {
-    const path = `${PRIVDER_PREFIX}/${serviceName}/providers`;
+  async getProviderList(registryConfig, serviceInfo) {
+    const path = `${PRIVDER_PREFIX}/${serviceInfo.serviceName}/providers`;
 
     const children = await zkClientUtils.getChildren(registryConfig, path);
 
@@ -109,8 +122,8 @@ class ZookeeperDataSource {
   }
 
 
-  async getConsumerList(registryConfig, serviceName) {
-    const path = `${PRIVDER_PREFIX}/${serviceName}/consumers`;
+  async getConsumerList(registryConfig, serviceInfo) {
+    const path = `${PRIVDER_PREFIX}/${serviceInfo.serviceName}/consumers`;
 
     const children = await zkClientUtils.getChildren(registryConfig, path);
     return children.map(data => this.parseConsumerInfo(decodeURIComponent(data)));
