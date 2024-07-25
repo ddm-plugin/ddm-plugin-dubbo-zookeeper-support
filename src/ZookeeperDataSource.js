@@ -71,14 +71,6 @@ class ZookeeperDataSource {
     return treeUtils.createTree(serviceList, ".");
   }
 
-  optimizationTree() {
-    let keyword =  this.searchKeyword ?this.searchKeyword.toLowerCase() : "";
-    let filtedInterface = this.allServiceList.filter((i) => this.match(i, keyword));
-    this.$emit("interfaceCountChange", filtedInterface.length);
-    return treeUtils.createTree(filtedInterface, ".");
-  }
-
-
   async getProviderList(registryConfig, serviceInfo) {
     const path = `${PRIVDER_PREFIX}/${serviceInfo.serviceName}/providers`;
 
@@ -276,6 +268,7 @@ class ZookeeperDataSource {
       port: urlData.port,
       address: `${urlData.host}:${urlData.port}`,
       serviceName: urlData.params.interface,
+      uniqueServiceName: urlData.params.interface,
       methods: urlData.params.methods.split(","),
       generic: urlData.params.generic,
       version: urlData.params.version,
