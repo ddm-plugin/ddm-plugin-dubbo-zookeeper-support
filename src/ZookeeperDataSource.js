@@ -68,7 +68,11 @@ class ZookeeperDataSource {
       return { serviceName: e, uniqueServiceName: e, type: 'dubbo' }
     })
 
-    return treeUtils.createTree(serviceList, ".");
+    return {
+      list: serviceList,
+      separator: '.',
+      packageSeparator: '.'
+    };
   }
 
   async getProviderList(registryConfig, serviceInfo) {
