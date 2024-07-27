@@ -176,7 +176,7 @@ class NacosDataSource {
 
         let array = new Array();
         for (let i = 0; i < response.data.hosts.length; i++) {
-            array.push(this.parseProvderInfo(response.data.hosts[i]))
+            array.push(this.parseConsumerInfo(response.data.hosts[i]))
         }
 
         return array;
@@ -273,21 +273,45 @@ class NacosDataSource {
 
         return {
             application: metadata.application,
-            protocol: metadata.protocol,
             ip: data.ip,
             port: data.port,
             address: `${data.ip}:${data.port}`,
             serviceName: metadata.interface,
-            methods: metadata.methods.split(","),
-            generic: metadata.generic,
-            version: metadata.version,
-            revision: metadata.revision,
-            dubboVersion: metadata.release,
-            deprecated: metadata.deprecated,
-            weight: data.weight,
-            enabled: data.enabled,
             group: metadata.group,
+            version: metadata.version,
+            deprecated: metadata.deprecated,
+            providerVersion: metadata.revision,
+            dubboVersion: metadata.release,
+            
+            weight: data.weight,
+            disabled: !data.enabled,
+            generic: metadata.generic,
+            methods: metadata.methods.split(","),
             // 2.7x就是dubbo端口，3.0之后是指定的端口
+            protocol: metadata.protocol,
+            qosPort: data.qosPort || data.port
+        };
+    }
+
+    parseConsumerInfo(data) {
+        let metadata = data.metadata || [];
+
+        return {
+            application: metadata.application,
+            ip: data.ip,
+            serviceName: metadata.interface,
+            group: metadata.group,
+            version: metadata.version,
+            deprecated: metadata.deprecated,
+            providerVersion: metadata.revision,
+            dubboVersion: metadata.release,
+            
+            weight: data.weight,
+            disabled: !data.enabled,
+            generic: metadata.generic,
+            methods: metadata.methods.split(","),
+            // 2.7x就是dubbo端口，3.0之后是指定的端口
+            protocol: metadata.protocol,
             qosPort: data.qosPort || data.port
         };
     }

@@ -17,9 +17,9 @@ export default (appCore) => {
                 appCore.registryPluginLocal(key, messages[key]);
             }
 
-            appCore.registerDataSource('zookeeper', new ZookeeperDataSource(appCore));
-            appCore.registerDataSource('nacos', new NacosDataSource(appCore));
             appCore.registerDataSource('dubbo-admin', new DubboAdminDataSource(appCore));
+            appCore.registerDataSource('nacos', new NacosDataSource(appCore));
+            appCore.registerDataSource('zookeeper', new ZookeeperDataSource(appCore));
             return {}
         }
     };
