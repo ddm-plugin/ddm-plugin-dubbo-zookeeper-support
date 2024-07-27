@@ -20,14 +20,19 @@
   "author": "qiaolin",
   "license": "ISC",
   "devDependencies": {
-    "vue-template-compiler": "^2.6.11",
-    "vue-loader": "15.11.1",
-    "vue": "^2.6.11",
     "@babel/core": "^7.24.7",
     "babel-cli": "^6.26.0",
     "babel-loader": "^8.2.5",
     "node-zookeeper-client": "^1.1.1",
+    "vue": "^2.6.11",
+    "vue-loader": "15.11.1",
+    "vue-template-compiler": "^2.6.11",
     "webpack": "^5.92.1",
-    "webpack-cli": "^5.1.4"
+    "webpack-cli": "^5.1.4",
+    "qs": "^6.11.0",
+    "js-yaml": "^4.1.0",
+    "urijs": "^1.19.11"
+  },
+  "dependencies": {
   }
 }

@@ -5,8 +5,8 @@ const VueLoaderPlugin = require('vue-loader/lib/plugin');
 
 module.exports = {
   entry: {
-    index: './src/index.js',
-    renderIndex: './src/render/main.js',
+    index: './src/main/index.js',
+    renderIndex: './src/renderer/main.js',
   },
   output: {
     path: path.resolve(__dirname, './dist/'),
@@ -33,7 +33,8 @@ module.exports = {
   resolve: {
     alias: {
       // 确保使用包含编译器的 Vue 构建版本
-      'vue$': 'vue/dist/vue.esm.js'
+      'vue$': 'vue/dist/vue.esm.js',
+      '@': path.resolve(__dirname, 'src'), // 将'@'别名指向项目的src目录
     },
     extensions: ['*', '.js', '.vue', '.json']
   },
